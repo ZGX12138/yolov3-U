@@ -25,7 +25,6 @@ from utils.general import (LOGGER, check_requirements, check_suffix, colorstr, i
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import time_sync
 
-
 def autopad(k, p=None):  # kernel, padding
     # Pad to 'same'
     if p is None:
@@ -102,6 +101,30 @@ class Bottleneck(nn.Module):
     def forward(self, x):
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
 
+class DenseLayer(nn.Sequential):
+    """Basic unit of DenseBlock (using bottleneck layer) """
+    def __init__(self, num_input_features, growth_rate, bn_size):
+        super(DenseLayer, self).__init__()
+        self.add_module("norm1", nn.BatchNorm2d(num_input_features))
+        self.add_module("relu1", nn.ReLU(inplace=True))
+        self.add_module("conv1", nn.Conv2d(num_input_features, bn_size*growth_rate,
+                                           kernel_size=1, stride=1, bias=False))
+        self.add_module("norm2", nn.BatchNorm2d(bn_size*growth_rate))
+        self.add_module("relu2", nn.ReLU(inplace=True))
+        self.add_module("conv2", nn.Conv2d(bn_size*growth_rate, growth_rate,
+                                           kernel_size=3, stride=1, padding=1, bias=False))
+
+    def forward(self, x):
+        new_features = super(DenseLayer, self).forward(x)
+        # 在通道维上将输入和输出连结
+        return torch.cat([x, new_features], 1)
+class DenseBlock(nn.Sequential):
+    """DenseBlock"""
+    def __init__(self, num_input_features, num_output_features,num_layers,bn_size, growth_rate):
+        super(DenseBlock, self).__init__()
+        for i in range(num_layers):
+            layer = DenseLayer(num_input_features+i*growth_rate, growth_rate, bn_size)
+            self.add_module("denselayer%d" % (i+1), layer)
 
 class BottleneckCSP(nn.Module):
     # CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks
