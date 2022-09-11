@@ -118,6 +118,7 @@ class DenseLayer(nn.Sequential):
         new_features = super(DenseLayer, self).forward(x)
         # 在通道维上将输入和输出连结
         return torch.cat([x, new_features], 1)
+
 class DenseBlock(nn.Sequential):
     """DenseBlock"""
     def __init__(self, num_input_features, num_output_features,num_layers,bn_size, growth_rate):
@@ -125,6 +126,15 @@ class DenseBlock(nn.Sequential):
         for i in range(num_layers):
             layer = DenseLayer(num_input_features+i*growth_rate, growth_rate, bn_size)
             self.add_module("denselayer%d" % (i+1), layer)
+
+class Add(nn.Module):
+    # Concatenate a list of tensors along dimension
+    def __init__(self, c2=1024):
+        super().__init__()
+        self.c2 = c2
+
+    def forward(self, x):
+        return torch.add(x[0],x[1])
 
 class BottleneckCSP(nn.Module):
     # CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks

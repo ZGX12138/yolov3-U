@@ -26,6 +26,7 @@ backbone:
    [-1, 1, Conv, [512, 1, 1]],
    [-1, 1, DenseBlock, [2560,4,2,512]],  # myDCblock
    [-1, 1, Conv, [1024, 1, 1]],
+   [[-1, 10], 1, Add, [1024]],
   ]
 
 # YOLOv3 head

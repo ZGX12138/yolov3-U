@@ -273,6 +273,8 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
             if m in [BottleneckCSP, C3, C3TR, C3Ghost]:
                 args.insert(2, n)  # number of repeats
                 n = 1
+        elif m is Add:
+            c2 = args[0]
         elif m is nn.BatchNorm2d:
             args = [ch[f]]
         elif m is Concat:
